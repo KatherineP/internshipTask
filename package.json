@@ -1,7 +1,7 @@
 {
   "name": "internship_task",
   "version": "1.0.0",
-  "description": "",
+  "description": "Calendar - Test task for Ciklum internship",
   "main": "index.js",
   "private": true,
   "scripts": {
@@ -36,5 +36,13 @@
     "webpack": "^5.19.0",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.3.11"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KatherineP/internshipTask.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KatherineP/internshipTask/issues"
+  },
+  "homepage": "https://github.com/KatherineP/internshipTask#readme"
 }

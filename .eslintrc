@@ -1,0 +1,12 @@
+{
+  "extends": ["airbnb/javascript", "plugin:prettier/recommended"],
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      { "singleQuote": true },
+      {
+        "usePrettierrc": false
+      }
+    ]
+  }
+}
