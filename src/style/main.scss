@@ -1,0 +1,31 @@
+$COLOR_ALERT: red;
+$COLOR_EVENT: #75c375;
+
+body {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 30px;
+}
+
+.event {
+  background-color: $COLOR_EVENT;
+}
+
+.hidden {
+  display: none;
+}
+
+.failed-validation {
+  border-color: $COLOR_ALERT;
+}
+
+table {
+  table-layout: fixed;
+  text-overflow: ellipsis;
+  td {
+    text-overflow: ellipsis;
+    max-width: 20%;
+    height: 40px;
+    overflow: hidden;
+  }
+}

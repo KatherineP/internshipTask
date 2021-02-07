@@ -1,0 +1,30 @@
+body {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 30px;
+}
+
+.event {
+  background-color: #75c375;
+}
+
+.hidden {
+  display: none;
+}
+
+.failed-validation {
+  border-color: red;
+}
+
+table {
+  table-layout: fixed;
+  text-overflow: ellipsis;
+}
+
+table td {
+  text-overflow: ellipsis;
+  max-width: 20%;
+  height: 40px;
+  overflow: hidden;
+}
+/*# sourceMappingURL=main.css.map */
