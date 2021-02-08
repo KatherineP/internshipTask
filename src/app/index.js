@@ -60,15 +60,14 @@ const startApplication = () => {
 
   const onClickDeleteEvent = (event) => {
     if (event.target.className != 'delete-event') return;
-    const cell = event.target.closest('.event'); //active event
-    const cellClass = cell.classList[0].split('-'); //mon-10
-    const cellEventText = cell.firstChild.data.trim(); //event text
+    const cell = event.target.closest('.event');
+    const cellClass = cell.classList[0].split('-');
+    const cellEventText = cell.firstChild.data.trim();
     const index = currentEvents.findIndex(
       (event) => event.day === cellClass[1] && event.time === cellClass[2]
     );
 
-    selectedEvent.eventText = cellEventText;
-    selectedEvent.class = `cell-${cellClass[1]}-${cellClass[2]}`;
+    selectedEvent.cell = cell;
     selectedEvent.index = index;
 
     document.querySelector(
@@ -78,7 +77,7 @@ const startApplication = () => {
   };
 
   const onClickConfirmDeleteEvent = () => {
-    const cell = document.querySelector(`.${selectedEvent.class}`);
+    const cell = selectedEvent.cell;
     modal.hide();
     currentEvents.splice(selectedEvent.index, 1);
     cell.innerHTML = '';
