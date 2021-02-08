@@ -18,11 +18,15 @@ const startApplication = () => {
   const form = document.querySelector('#form');
   const day = document.querySelector('#day');
   const time = document.querySelector('#time');
+  const myModalEl = document.getElementById('staticBackdrop');
   const participants = document.querySelector('#participants');
   const newEvent = document.querySelector('.new-event');
   const confirmDelete = document.querySelector('.confirm-delete');
   const calendarContainer = document.querySelector('.container-calendar');
   const newEventContainer = document.querySelector('.container-newEvent');
+  const modal = new bootstrap.Modal(myModalEl, {
+    backdrop: true
+  });
   const currentEvents = [];
 
   const onSubmitCreateButton = event => {
@@ -52,6 +56,7 @@ const startApplication = () => {
 
   const onClickNewEventButton = () => {
     form.reset();
+    filter.value = 'All members';
     alert.classList.add('hidden'); // document.querySelector('.filter-option-inner-inner').innerText =
     //   'Nothing selected';
 
@@ -60,26 +65,26 @@ const startApplication = () => {
     newEventContainer.classList.remove('hidden');
   };
 
+  let selectedEvent = {};
+
   const onClickDeleteEvent = event => {
     if (event.target.className != 'delete-event') return;
     const cell = event.target.closest('.event');
     const cellClass = cell.classList[0].split('-');
-    const cellEventText = document.querySelector(`.cell-${cellClass[1]}-${cellClass[2]}`).firstChild.data;
-    console.log(cellEventText);
-    const index = currentEvents.findIndex(event => {
-      if (event.day === cellClass[1] && event.time === cellClass[2]) {
-        return event;
-      }
+    const cellEventText = cell.firstChild.data.trim();
+    const index = currentEvents.findIndex(event => event.day === cellClass[1] && event.time === cellClass[2]);
+    selectedEvent.cell = cell;
+    selectedEvent.index = index;
+    document.querySelector('.modal-body').innerText = `Are you sure you want to delete "${cellEventText}" event?`;
+    modal.show();
+  };
 
-      return;
-    });
-    document.querySelector('.modal-body').innerText = `Are you sure you want to delete "${cellEventText.trim()}" event?`;
-    confirmDelete.addEventListener('click', () => {
-      $('.modal').modal('hide');
-      currentEvents.splice(index, 1);
-      cell.innerHTML = '';
-      cell.classList.remove('event');
-    });
+  const onClickConfirmDeleteEvent = () => {
+    const cell = selectedEvent.cell;
+    modal.hide();
+    currentEvents.splice(selectedEvent.index, 1);
+    cell.innerHTML = '';
+    cell.classList.remove('event');
   };
 
   const onClickFilterParticipant = () => {
@@ -104,6 +109,7 @@ const startApplication = () => {
   newEvent.addEventListener('click', onClickNewEventButton);
   table.addEventListener('click', onClickDeleteEvent);
   filter.addEventListener('change', onClickFilterParticipant);
+  confirmDelete.addEventListener('click', onClickConfirmDeleteEvent);
 
   const showCalendarContainer = () => {
     calendarContainer.classList.remove('hidden');
@@ -137,7 +143,7 @@ const startApplication = () => {
     const cell = document.querySelector(`.${cellClass}`);
     cell.innerHTML = `
         ${eventText}
-        <button type="button" id="delete-event" class="close" aria-label="Close" data-toggle="modal" data-target="#staticBackdrop">
+        <button type="button" id="delete-event" class="close" aria-label="Close">
           <span class="delete-event">&times;</span>
         </button>
       `;
@@ -155,7 +161,7 @@ const startApplication = () => {
       const cell = document.querySelector(`.${cellClass}`);
       cell.innerHTML = `
       ${eventText}
-      <button type="button" id="delete-event" class="close" aria-label="Close" data-toggle="modal" data-target="#staticBackdrop">
+      <button type="button" id="delete-event" class="close" aria-label="Close">
         <span class="delete-event">&times;</span>
       </button>
     `;
