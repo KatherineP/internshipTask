@@ -48,6 +48,7 @@ const startApplication = () => {
   const onClickNewEventButton = () => {
     form.reset();
     filter.value = 'All members';
+    renderFilteredEvents(currentEvents);
     alert.classList.add('hidden');
     // document.querySelector('.filter-option-inner-inner').innerText =
     //   'Nothing selected';
