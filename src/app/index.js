@@ -17,7 +17,31 @@ const startApplication = () => {
   const newEventContainer = document.querySelector('.container-newEvent');
   const modal = new bootstrap.Modal(myModalEl, { backdrop: true });
 
-  const currentEvents = [];
+  let currentEvents = [];
+
+  const renderFilteredEvents = (events) => {
+    return events.map((event) => {
+      const { eventText, day, time } = event;
+      const cellClass = `cell-${day}-${time}`;
+      const cell = document.querySelector(`.${cellClass}`);
+      cell.innerHTML = `
+      ${eventText}
+      <button type="button" id="delete-event" class="close" aria-label="Close">
+        <span class="delete-event">&times;</span>
+      </button>
+    `;
+      cell.classList.add('event');
+    });
+  };
+
+  const eventsFromLocalStorage = JSON.parse(
+    localStorage.getItem('currentEvents')
+  );
+
+  if (eventsFromLocalStorage !== null) {
+    currentEvents = eventsFromLocalStorage;
+    renderFilteredEvents(currentEvents);
+  }
 
   const onSubmitCreateButton = (event) => {
     event.preventDefault();
@@ -41,6 +65,7 @@ const startApplication = () => {
     }
 
     currentEvents.push(newEvent);
+    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     renderEvent(newEvent);
     showCalendarContainer();
   };
@@ -81,6 +106,7 @@ const startApplication = () => {
     const cell = selectedEvent.cell;
     modal.hide();
     currentEvents.splice(selectedEvent.index, 1);
+    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     cell.innerHTML = '';
     cell.classList.remove('event');
   };
@@ -142,21 +168,6 @@ const startApplication = () => {
         </button>
       `;
     cell.classList.add('event');
-  };
-
-  const renderFilteredEvents = (events) => {
-    return events.map((event) => {
-      const { eventText, day, time } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = `
-      ${eventText}
-      <button type="button" id="delete-event" class="close" aria-label="Close">
-        <span class="delete-event">&times;</span>
-      </button>
-    `;
-      cell.classList.add('event');
-    });
   };
 
   const deleteAllEvents = (events) => {
