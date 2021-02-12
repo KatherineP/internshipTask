@@ -1,4 +1,3 @@
-//import './styles/main.scss';
 import '../style/main.scss';
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
@@ -48,9 +47,12 @@ const startApplication = () => {
     if (!isValid(eventText, participants, day, time)) {
       return;
     }
-    const participantsValue = document
-      .querySelector('.filter-option-inner-inner')
-      .innerText.split(', ');
+    const selectedParticipants = document.querySelectorAll(
+      '#participants option:checked'
+    );
+    const participantsValue = Array.from(selectedParticipants).map(
+      (el) => el.value
+    );
 
     const newEvent = {
       eventText: eventText.value,
@@ -75,9 +77,6 @@ const startApplication = () => {
     filter.value = 'All members';
     renderFilteredEvents(currentEvents);
     alert.classList.add('hidden');
-    // document.querySelector('.filter-option-inner-inner').innerText =
-    //   'Nothing selected';
-    $('.selectpicker').selectpicker('deselectAll');
     calendarContainer.classList.add('hidden');
     newEventContainer.classList.remove('hidden');
   };
@@ -85,7 +84,7 @@ const startApplication = () => {
   let selectedEvent = {};
 
   const onClickDeleteEvent = (event) => {
-    if (event.target.className != 'delete-event') return;
+    if (!event.target.classList.contains('delete-event')) return;
     const cell = event.target.closest('.event');
     const cellClass = cell.classList[0].split('-');
     const cellEventText = cell.firstChild.data.trim();
