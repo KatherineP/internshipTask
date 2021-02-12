@@ -6,7 +6,6 @@
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_main_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
-//import './styles/main.scss';
 
 
 const startApplication = () => {
@@ -27,7 +26,33 @@ const startApplication = () => {
   const modal = new bootstrap.Modal(myModalEl, {
     backdrop: true
   });
-  const currentEvents = [];
+  let currentEvents = [];
+
+  const renderFilteredEvents = events => {
+    return events.map(event => {
+      const {
+        eventText,
+        day,
+        time
+      } = event;
+      const cellClass = `cell-${day}-${time}`;
+      const cell = document.querySelector(`.${cellClass}`);
+      cell.innerHTML = `
+      ${eventText}
+      <button type="button" id="delete-event" class="close" aria-label="Close">
+        <span class="delete-event">&times;</span>
+      </button>
+    `;
+      cell.classList.add('event');
+    });
+  };
+
+  const eventsFromLocalStorage = JSON.parse(localStorage.getItem('currentEvents'));
+
+  if (eventsFromLocalStorage !== null) {
+    currentEvents = eventsFromLocalStorage;
+    renderFilteredEvents(currentEvents);
+  }
 
   const onSubmitCreateButton = event => {
     event.preventDefault();
@@ -36,7 +61,8 @@ const startApplication = () => {
       return;
     }
 
-    const participantsValue = document.querySelector('.filter-option-inner-inner').innerText.split(', ');
+    const selectedParticipants = document.querySelectorAll('#participants option:checked');
+    const participantsValue = Array.from(selectedParticipants).map(el => el.value);
     const newEvent = {
       eventText: eventText.value,
       participants: participantsValue,
@@ -50,6 +76,7 @@ const startApplication = () => {
     }
 
     currentEvents.push(newEvent);
+    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     renderEvent(newEvent);
     showCalendarContainer();
   };
@@ -58,10 +85,7 @@ const startApplication = () => {
     form.reset();
     filter.value = 'All members';
     renderFilteredEvents(currentEvents);
-    alert.classList.add('hidden'); // document.querySelector('.filter-option-inner-inner').innerText =
-    //   'Nothing selected';
-
-    $('.selectpicker').selectpicker('deselectAll');
+    alert.classList.add('hidden');
     calendarContainer.classList.add('hidden');
     newEventContainer.classList.remove('hidden');
   };
@@ -69,7 +93,7 @@ const startApplication = () => {
   let selectedEvent = {};
 
   const onClickDeleteEvent = event => {
-    if (event.target.className != 'delete-event') return;
+    if (!event.target.classList.contains('delete-event')) return;
     const cell = event.target.closest('.event');
     const cellClass = cell.classList[0].split('-');
     const cellEventText = cell.firstChild.data.trim();
@@ -84,6 +108,7 @@ const startApplication = () => {
     const cell = selectedEvent.cell;
     modal.hide();
     currentEvents.splice(selectedEvent.index, 1);
+    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     cell.innerHTML = '';
     cell.classList.remove('event');
   };
@@ -149,25 +174,6 @@ const startApplication = () => {
         </button>
       `;
     cell.classList.add('event');
-  };
-
-  const renderFilteredEvents = events => {
-    return events.map(event => {
-      const {
-        eventText,
-        day,
-        time
-      } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = `
-      ${eventText}
-      <button type="button" id="delete-event" class="close" aria-label="Close">
-        <span class="delete-event">&times;</span>
-      </button>
-    `;
-      cell.classList.add('event');
-    });
   };
 
   const deleteAllEvents = events => {
@@ -502,7 +508,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_cssWithMappingToString_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "body {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px; }\n\n.event {\n  background-color: #75c375; }\n\n.hidden {\n  display: none; }\n\n.failed-validation {\n  border-color: red; }\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis; }\n  table td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden; }\n", "",{"version":3,"sources":["webpack://./src/style/main.scss"],"names":[],"mappings":"AAGA;EACE,iBAAiB;EACjB,iBAAiB;EACjB,aAAa,EAAA;;AAGf;EACE,yBATmB,EAAA;;AAYrB;EACE,aAAa,EAAA;;AAGf;EACE,iBAlBe,EAAA;;AAqBjB;EACE,mBAAmB;EACnB,uBAAuB,EAAA;EAFzB;IAII,uBAAuB;IACvB,cAAc;IACd,YAAY;IACZ,gBAAgB,EAAA","sourcesContent":["$COLOR_ALERT: red;\n$COLOR_EVENT: #75c375;\n\nbody {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px;\n}\n\n.event {\n  background-color: $COLOR_EVENT;\n}\n\n.hidden {\n  display: none;\n}\n\n.failed-validation {\n  border-color: $COLOR_ALERT;\n}\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis;\n  td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden;\n  }\n}\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, "body {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px; }\n\n.event {\n  background-color: #75c375; }\n\n.hidden {\n  display: none; }\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto; }\n  .container-newEvent .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small; }\n  .container-newEvent .failed-validation {\n    border-color: red; }\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis; }\n  table td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden; }\n", "",{"version":3,"sources":["webpack://./src/style/main.scss"],"names":[],"mappings":"AAGA;EACE,iBAAiB;EACjB,iBAAiB;EACjB,aAAa,EAAA;;AAGf;EACE,yBATmB,EAAA;;AAYrB;EACE,aAAa,EAAA;;AAGf;EACE,gBAAgB;EAChB,cAAc,EAAA;EAFhB;IAKI,SAAS;IACT,cAAc;IACd,gBAAgB,EAAA;EAPpB;IAWI,iBA5Ba,EAAA;;AAgCjB;EACE,mBAAmB;EACnB,uBAAuB,EAAA;EAFzB;IAII,uBAAuB;IACvB,cAAc;IACd,YAAY;IACZ,gBAAgB,EAAA","sourcesContent":["$COLOR_ALERT: red;\n$COLOR_EVENT: #75c375;\n\nbody {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px;\n}\n\n.event {\n  background-color: $COLOR_EVENT;\n}\n\n.hidden {\n  display: none;\n}\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto;\n\n  .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small;\n  }\n\n  .failed-validation {\n    border-color: $COLOR_ALERT;\n  }\n}\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis;\n  td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden;\n  }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
