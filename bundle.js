@@ -6,11 +6,19 @@
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_main_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
+/* harmony import */ var _helpers_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6);
+/* harmony import */ var _rendering_rendering__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7);
+/* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8);
+/* harmony import */ var _users_users__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9);
+
+
+
+
 
 
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
-  const filter = document.querySelector('.custom-select');
+  const filter = document.querySelector('.users-filter');
   const table = document.querySelector('.table');
   const alert = document.querySelector('.alert-danger');
   const eventText = document.querySelector('#inputNameEvent');
@@ -18,46 +26,98 @@ const startApplication = () => {
   const day = document.querySelector('#day');
   const time = document.querySelector('#time');
   const myModalEl = document.getElementById('staticBackdrop');
+  const authModalEl = document.getElementById('auth');
   const participants = document.querySelector('#participants');
   const newEvent = document.querySelector('.new-event');
   const confirmDelete = document.querySelector('.confirm-delete');
   const calendarContainer = document.querySelector('.container-calendar');
   const newEventContainer = document.querySelector('.container-newEvent');
+  const confirmAuth = document.querySelector('.confirm-auth');
+  const authSelect = document.querySelector('.auth-select');
   const modal = new bootstrap.Modal(myModalEl, {
     backdrop: true
   });
+  const authModal = new bootstrap.Modal(authModalEl, {
+    backdrop: 'static',
+    keyboard: false
+  });
   let currentEvents = [];
+  let selectedEvent = {};
+  let draggedElIndex = null;
+  let authUser = null;
+  let userObj = null;
 
-  const renderFilteredEvents = events => {
-    return events.map(event => {
-      const {
-        eventText,
-        day,
-        time
-      } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = `
-      ${eventText}
-      <button type="button" id="delete-event" class="close" aria-label="Close">
-        <span class="delete-event">&times;</span>
-      </button>
-    `;
-      cell.classList.add('event');
-    });
-  };
+  const onClickConfirmAuth = () => {
+    authUser = authSelect.value;
+    authModal.hide();
+    const userType = _config__WEBPACK_IMPORTED_MODULE_3__.default.find(user => user.name === authUser).type;
+
+    if (userType === 'user') {
+      let user = new _users_users__WEBPACK_IMPORTED_MODULE_4__.User(authUser);
+      userObj = user;
+    } else if (userType === 'admin') {
+      let user = new _users_users__WEBPACK_IMPORTED_MODULE_4__.Admin(authUser);
+      userObj = user;
+    }
+
+    onAuthComplete(userObj);
+  }; // local Storage functionality
+
 
   const eventsFromLocalStorage = JSON.parse(localStorage.getItem('currentEvents'));
 
   if (eventsFromLocalStorage !== null) {
     currentEvents = eventsFromLocalStorage;
-    renderFilteredEvents(currentEvents);
+    (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
+  }
+
+  const onAuthComplete = user => {
+    if (user.can('create-event') && user.can('drag') && user.can('delete')) {
+      (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
+    } else {
+      (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEventsForUser)(currentEvents);
+      newEvent.classList.add('hidden');
+    }
+  }; // auth pop-up functionality
+
+
+  authModal.show(); // drag and drop functionality
+
+  const drag = event => {
+    if (!event.target.classList.contains('event')) return;
+    const draggedElemId = event.target.id;
+    const elemClass = event.target.parentElement.className;
+    const elemClassArray = elemClass.split('-');
+    const index = currentEvents.findIndex(event => event.day === elemClassArray[1] && event.time === elemClassArray[2]);
+    draggedElIndex = index;
+    event.dataTransfer.setData('text/plain', draggedElemId);
+  };
+
+  for (const dropZone of [...document.querySelectorAll('td')]) {
+    dropZone.addEventListener('dragover', e => {
+      if (dropZone.childElementCount !== 0) return;
+      e.preventDefault();
+    });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      const draggedElemId = e.dataTransfer.getData('text/plain');
+      const draggedElem = document.getElementById(`${draggedElemId}`);
+      dropZone.append(draggedElem);
+      const classNamesArrayOfNewCell = dropZone.className.split('-');
+      const newEvent = { ...currentEvents[draggedElIndex],
+        day: classNamesArrayOfNewCell[1],
+        time: classNamesArrayOfNewCell[2]
+      };
+      currentEvents.push(newEvent);
+      currentEvents.splice(draggedElIndex, 1);
+      localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
+    });
   }
 
   const onSubmitCreateButton = event => {
     event.preventDefault();
 
-    if (!isValid(eventText, participants, day, time)) {
+    if (!(0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.isValid)(eventText, participants, day, time)) {
       return;
     }
 
@@ -70,32 +130,30 @@ const startApplication = () => {
       time: time.value
     };
 
-    if (isEventDuplicated(newEvent)) {
+    if ((0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.isEventDuplicated)(newEvent, currentEvents)) {
       alert.classList.remove('hidden');
       return;
     }
 
     currentEvents.push(newEvent);
     localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
-    renderEvent(newEvent);
-    showCalendarContainer();
+    (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderEvent)(newEvent);
+    (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.showCalendarContainer)(calendarContainer, newEventContainer);
   };
 
   const onClickNewEventButton = () => {
     form.reset();
     filter.value = 'All members';
-    renderFilteredEvents(currentEvents);
+    (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
     alert.classList.add('hidden');
     calendarContainer.classList.add('hidden');
     newEventContainer.classList.remove('hidden');
   };
 
-  let selectedEvent = {};
-
   const onClickDeleteEvent = event => {
     if (!event.target.classList.contains('delete-event')) return;
     const cell = event.target.closest('.event');
-    const cellClass = cell.classList[0].split('-');
+    const cellClass = cell.parentElement.classList[0].split('-');
     const cellEventText = cell.firstChild.data.trim();
     const index = currentEvents.findIndex(event => event.day === cellClass[1] && event.time === cellClass[2]);
     selectedEvent.cell = cell;
@@ -111,6 +169,7 @@ const startApplication = () => {
     localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     cell.innerHTML = '';
     cell.classList.remove('event');
+    cell.setAttribute('draggable', false);
   };
 
   const onClickFilterParticipant = () => {
@@ -121,73 +180,23 @@ const startApplication = () => {
 
       return;
     });
-    deleteAllEvents(currentEvents);
+    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.deleteAllEvents)(currentEvents);
 
     if (filter.value === 'All members') {
-      return renderFilteredEvents(currentEvents);
+      return (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
     }
 
-    renderFilteredEvents(filteredEvents);
+    (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(filteredEvents);
   };
 
   form.addEventListener('submit', onSubmitCreateButton);
-  cancelButton.addEventListener('click', () => showCalendarContainer());
+  cancelButton.addEventListener('click', () => (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.showCalendarContainer)(calendarContainer, newEventContainer));
   newEvent.addEventListener('click', onClickNewEventButton);
   table.addEventListener('click', onClickDeleteEvent);
   filter.addEventListener('change', onClickFilterParticipant);
   confirmDelete.addEventListener('click', onClickConfirmDeleteEvent);
-
-  const showCalendarContainer = () => {
-    calendarContainer.classList.remove('hidden');
-    newEventContainer.classList.add('hidden');
-  };
-
-  const isEventDuplicated = newEvent => {
-    const {
-      day,
-      time
-    } = newEvent;
-    const duplicate = currentEvents.find(event => event.day === day && event.time === time);
-    return duplicate === undefined ? false : true;
-  };
-
-  const isValid = (eventText, participants, day, time) => {
-    if (eventText.checkValidity() && participants.checkValidity() && day.checkValidity() && time.checkValidity()) {
-      return true;
-    }
-
-    return false;
-  };
-
-  const renderEvent = event => {
-    const {
-      eventText,
-      day,
-      time
-    } = event;
-    const cellClass = `cell-${day}-${time}`;
-    const cell = document.querySelector(`.${cellClass}`);
-    cell.innerHTML = `
-        ${eventText}
-        <button type="button" id="delete-event" class="close" aria-label="Close">
-          <span class="delete-event">&times;</span>
-        </button>
-      `;
-    cell.classList.add('event');
-  };
-
-  const deleteAllEvents = events => {
-    events.map(event => {
-      const {
-        day,
-        time
-      } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = '';
-      cell.classList.remove('event');
-    });
-  };
+  confirmAuth.addEventListener('click', onClickConfirmAuth);
+  table.addEventListener('dragstart', drag);
 };
 
 startApplication();
@@ -508,7 +517,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_cssWithMappingToString_js__WEBPACK_IMPORTED_MODULE_0___default()));
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "body {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px; }\n\n.event {\n  background-color: #75c375; }\n\n.hidden {\n  display: none; }\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto; }\n  .container-newEvent .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small; }\n  .container-newEvent .failed-validation {\n    border-color: red; }\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis; }\n  table td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden; }\n", "",{"version":3,"sources":["webpack://./src/style/main.scss"],"names":[],"mappings":"AAGA;EACE,iBAAiB;EACjB,iBAAiB;EACjB,aAAa,EAAA;;AAGf;EACE,yBATmB,EAAA;;AAYrB;EACE,aAAa,EAAA;;AAGf;EACE,gBAAgB;EAChB,cAAc,EAAA;EAFhB;IAKI,SAAS;IACT,cAAc;IACd,gBAAgB,EAAA;EAPpB;IAWI,iBA5Ba,EAAA;;AAgCjB;EACE,mBAAmB;EACnB,uBAAuB,EAAA;EAFzB;IAII,uBAAuB;IACvB,cAAc;IACd,YAAY;IACZ,gBAAgB,EAAA","sourcesContent":["$COLOR_ALERT: red;\n$COLOR_EVENT: #75c375;\n\nbody {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px;\n}\n\n.event {\n  background-color: $COLOR_EVENT;\n}\n\n.hidden {\n  display: none;\n}\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto;\n\n  .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small;\n  }\n\n  .failed-validation {\n    border-color: $COLOR_ALERT;\n  }\n}\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis;\n  td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden;\n  }\n}\n"],"sourceRoot":""}]);
+___CSS_LOADER_EXPORT___.push([module.id, "body {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px; }\n\n.event {\n  background-color: #75c375; }\n\n.hidden {\n  display: none; }\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto; }\n  .container-newEvent .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small; }\n  .container-newEvent .failed-validation {\n    border-color: red; }\n\n.table th {\n  height: 50px; }\n\n.table td {\n  padding: 0;\n  height: 50px; }\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis; }\n  table td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden; }\n    table td div {\n      height: 100%;\n      width: 100%;\n      position: relative;\n      padding: 10px 10px 5px 5px; }\n", "",{"version":3,"sources":["webpack://./src/style/main.scss"],"names":[],"mappings":"AAGA;EACE,iBAAiB;EACjB,iBAAiB;EACjB,aAAa,EAAA;;AAGf;EACE,yBATmB,EAAA;;AAYrB;EACE,aAAa,EAAA;;AAGf;EACE,gBAAgB;EAChB,cAAc,EAAA;EAFhB;IAKI,SAAS;IACT,cAAc;IACd,gBAAgB,EAAA;EAPpB;IAWI,iBA5Ba,EAAA;;AAgCjB;EAEI,YAAY,EAAA;;AAFhB;EAKI,UAAU;EACV,YAAY,EAAA;;AAIhB;EACE,mBAAmB;EACnB,uBAAuB,EAAA;EAFzB;IAII,uBAAuB;IACvB,cAAc;IACd,YAAY;IACZ,gBAAgB,EAAA;IAPpB;MASM,YAAY;MACZ,WAAW;MACX,kBAAkB;MAClB,0BAA0B,EAAA","sourcesContent":["$COLOR_ALERT: red;\n$COLOR_EVENT: #75c375;\n\nbody {\n  max-width: 1200px;\n  margin: 20px auto;\n  padding: 30px;\n}\n\n.event {\n  background-color: $COLOR_EVENT;\n}\n\n.hidden {\n  display: none;\n}\n\n.container-newEvent {\n  max-width: 900px;\n  margin: 0 auto;\n\n  .multiselect-tip {\n    margin: 0;\n    color: #6c757d;\n    font-size: small;\n  }\n\n  .failed-validation {\n    border-color: $COLOR_ALERT;\n  }\n}\n\n.table {\n  th {\n    height: 50px;\n  }\n  td {\n    padding: 0;\n    height: 50px;\n  }\n}\n\ntable {\n  table-layout: fixed;\n  text-overflow: ellipsis;\n  td {\n    text-overflow: ellipsis;\n    max-width: 20%;\n    height: 40px;\n    overflow: hidden;\n    div {\n      height: 100%;\n      width: 100%;\n      position: relative;\n      padding: 10px 10px 5px 5px;\n    }\n  }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -620,6 +629,172 @@ module.exports = function (cssWithMappingToString) {
 
   return list;
 };
+
+/***/ }),
+/* 6 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "isEventDuplicated": () => (/* binding */ isEventDuplicated),
+/* harmony export */   "isValid": () => (/* binding */ isValid),
+/* harmony export */   "deleteAllEvents": () => (/* binding */ deleteAllEvents)
+/* harmony export */ });
+const isEventDuplicated = (newEvent, currentEvents) => {
+  const {
+    day,
+    time
+  } = newEvent;
+  const duplicate = currentEvents.find(event => event.day === day && event.time === time);
+  return duplicate === undefined ? false : true;
+};
+
+const isValid = (eventText, participants, day, time) => {
+  if (eventText.checkValidity() && participants.checkValidity() && day.checkValidity() && time.checkValidity()) {
+    return true;
+  }
+
+  return false;
+};
+
+const deleteAllEvents = events => {
+  events.map(event => {
+    const {
+      day,
+      time
+    } = event;
+    const cellClass = `cell-${day}-${time}`;
+    const cell = document.querySelector(`#${cellClass}`);
+    cell.innerHTML = '';
+    cell.classList.remove('event');
+    cell.setAttribute('draggable', false);
+  });
+};
+
+
+
+/***/ }),
+/* 7 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "renderFilteredEvents": () => (/* binding */ renderFilteredEvents),
+/* harmony export */   "renderEvent": () => (/* binding */ renderEvent),
+/* harmony export */   "showCalendarContainer": () => (/* binding */ showCalendarContainer),
+/* harmony export */   "renderFilteredEventsForUser": () => (/* binding */ renderFilteredEventsForUser)
+/* harmony export */ });
+const renderFilteredEvents = events => {
+  return events.map(event => {
+    const {
+      eventText,
+      day,
+      time
+    } = event;
+    const cellClass = `cell-${day}-${time}`;
+    const cell = document.querySelector(`.${cellClass}`);
+    cell.innerHTML = `<div id="${cellClass}" draggable="true">
+      ${eventText}
+      <button type="button" id="delete-event" class="close" aria-label="Close">
+        <span class="delete-event">&times;</span>
+      </button></div>`;
+    cell.firstElementChild.classList.add('event');
+  });
+};
+
+const renderFilteredEventsForUser = events => {
+  return events.map(event => {
+    const {
+      eventText,
+      day,
+      time
+    } = event;
+    const cellClass = `cell-${day}-${time}`;
+    const cell = document.querySelector(`.${cellClass}`);
+    cell.innerHTML = `<div id="${cellClass}">
+      ${eventText}
+      <button type="button" id="delete-event" class="close" aria-label="Close">
+      </button></div>`;
+    cell.firstElementChild.classList.add('event');
+  });
+};
+
+const renderEvent = event => {
+  const {
+    eventText,
+    day,
+    time
+  } = event;
+  const cellClass = `cell-${day}-${time}`;
+  const cell = document.querySelector(`.${cellClass}`);
+  cell.innerHTML = `<div id="${cellClass}" draggable="true">
+      ${eventText}
+      <button type="button" id="delete-event" class="close" aria-label="Close">
+        <span class="delete-event">&times;</span>
+      </button></div>`;
+  cell.firstElementChild.classList.add('event');
+};
+
+const showCalendarContainer = (calendarContainer, newEventContainer) => {
+  calendarContainer.classList.remove('hidden');
+  newEventContainer.classList.add('hidden');
+};
+
+
+
+/***/ }),
+/* 8 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+const users = [{
+  name: 'Kate Prokofieva',
+  type: 'admin'
+}, {
+  name: 'Alex Prokofiev',
+  type: 'user'
+}, {
+  name: 'Peter Smolic',
+  type: 'user'
+}, {
+  name: 'Hana Carpenter',
+  type: 'user'
+}];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (users);
+
+/***/ }),
+/* 9 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "User": () => (/* binding */ User),
+/* harmony export */   "Admin": () => (/* binding */ Admin)
+/* harmony export */ });
+class User {
+  constructor(name) {
+    this.name = name;
+    this.permissions = [];
+  }
+
+  can(action) {
+    return this.permissions.includes(action);
+  }
+
+}
+
+class Admin extends User {
+  constructor(name) {
+    super(name);
+    this.permissions = ['create-event', 'drag', 'delete'];
+  }
+
+}
+
+
 
 /***/ })
 /******/ 	]);

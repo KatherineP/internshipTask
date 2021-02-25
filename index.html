@@ -17,7 +17,7 @@
         <h1>Calendar</h1>
         <div class="d-flex">
           <div class="mr-3">
-            <select class="custom-select">
+            <select class="custom-select users-filter">
               <option selected>All members</option>
               <option value="Kate Prokofieva">Kate Prokofieva</option>
               <option value="Alex Prokofiev">Alex Prokofiev</option>
@@ -58,6 +58,34 @@
               </button>
               <button type="button" class="btn btn-secondary confirm-delete">
                 Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="auth"
+        data-backdrop="static"
+        data-keyboard="false"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="authLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body">Please authorize</div>
+            <select class="custom-select auth-select">
+              <option value="Kate Prokofieva">Kate Prokofieva</option>
+              <option value="Alex Prokofiev">Alex Prokofiev</option>
+              <option value="Peter Smolic">Peter Smolic</option>
+              <option value="Hana Carpenter">Hana Carpenter</option>
+            </select>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary confirm-auth">
+                Confirm
               </button>
             </div>
           </div>
