@@ -30,6 +30,16 @@ body {
   }
 }
 
+.table {
+  th {
+    height: 50px;
+  }
+  td {
+    padding: 0;
+    height: 50px;
+  }
+}
+
 table {
   table-layout: fixed;
   text-overflow: ellipsis;
@@ -38,5 +48,11 @@ table {
     max-width: 20%;
     height: 40px;
     overflow: hidden;
+    div {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      padding: 10px 10px 5px 5px;
+    }
   }
 }

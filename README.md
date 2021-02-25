@@ -1,3 +1,5 @@
+Run _npm install_ to install all dependencies
+
 Calendar - Test task for Ciklum internship
 [Link to the App](https://katherinep.github.io/internshipTask/).
 

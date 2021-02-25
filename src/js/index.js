@@ -1,7 +1,17 @@
 import '../style/main.scss';
+import { isEventDuplicated, isValid, deleteAllEvents } from './helpers/helpers';
+import {
+  renderFilteredEvents,
+  renderEvent,
+  showCalendarContainer,
+  renderFilteredEventsForUser,
+} from './rendering/rendering';
+import users from '../config';
+import { User, Admin } from './users/users';
+
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
-  const filter = document.querySelector('.custom-select');
+  const filter = document.querySelector('.users-filter');
   const table = document.querySelector('.table');
   const alert = document.querySelector('.alert-danger');
   const eventText = document.querySelector('#inputNameEvent');
@@ -9,30 +19,41 @@ const startApplication = () => {
   const day = document.querySelector('#day');
   const time = document.querySelector('#time');
   const myModalEl = document.getElementById('staticBackdrop');
+  const authModalEl = document.getElementById('auth');
   const participants = document.querySelector('#participants');
   const newEvent = document.querySelector('.new-event');
   const confirmDelete = document.querySelector('.confirm-delete');
   const calendarContainer = document.querySelector('.container-calendar');
   const newEventContainer = document.querySelector('.container-newEvent');
+  const confirmAuth = document.querySelector('.confirm-auth');
+  const authSelect = document.querySelector('.auth-select');
   const modal = new bootstrap.Modal(myModalEl, { backdrop: true });
+  const authModal = new bootstrap.Modal(authModalEl, {
+    backdrop: 'static',
+    keyboard: false,
+  });
 
   let currentEvents = [];
+  let selectedEvent = {};
+  let draggedElIndex = null;
+  let authUser = null;
+  let userObj = null;
 
-  const renderFilteredEvents = (events) => {
-    return events.map((event) => {
-      const { eventText, day, time } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = `
-      ${eventText}
-      <button type="button" id="delete-event" class="close" aria-label="Close">
-        <span class="delete-event">&times;</span>
-      </button>
-    `;
-      cell.classList.add('event');
-    });
+  const onClickConfirmAuth = () => {
+    authUser = authSelect.value;
+    authModal.hide();
+    const userType = users.find((user) => user.name === authUser).type;
+    if (userType === 'user') {
+      let user = new User(authUser);
+      userObj = user;
+    } else if (userType === 'admin') {
+      let user = new Admin(authUser);
+      userObj = user;
+    }
+    onAuthComplete(userObj);
   };
 
+  // local Storage functionality
   const eventsFromLocalStorage = JSON.parse(
     localStorage.getItem('currentEvents')
   );
@@ -40,6 +61,55 @@ const startApplication = () => {
   if (eventsFromLocalStorage !== null) {
     currentEvents = eventsFromLocalStorage;
     renderFilteredEvents(currentEvents);
+  }
+
+  const onAuthComplete = (user) => {
+    if (user.can('create-event') && user.can('drag') && user.can('delete')) {
+      renderFilteredEvents(currentEvents);
+    } else {
+      renderFilteredEventsForUser(currentEvents);
+      newEvent.classList.add('hidden');
+    }
+  };
+
+  // auth pop-up functionality
+  authModal.show();
+
+  // drag and drop functionality
+  const drag = (event) => {
+    if (!event.target.classList.contains('event')) return;
+    const draggedElemId = event.target.id;
+    const elemClass = event.target.parentElement.className;
+    const elemClassArray = elemClass.split('-');
+    const index = currentEvents.findIndex(
+      (event) =>
+        event.day === elemClassArray[1] && event.time === elemClassArray[2]
+    );
+    draggedElIndex = index;
+    event.dataTransfer.setData('text/plain', draggedElemId);
+  };
+
+  for (const dropZone of [...document.querySelectorAll('td')]) {
+    dropZone.addEventListener('dragover', (e) => {
+      if (dropZone.childElementCount !== 0) return;
+      e.preventDefault();
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const draggedElemId = e.dataTransfer.getData('text/plain');
+      const draggedElem = document.getElementById(`${draggedElemId}`);
+      dropZone.append(draggedElem);
+      const classNamesArrayOfNewCell = dropZone.className.split('-');
+      const newEvent = {
+        ...currentEvents[draggedElIndex],
+        day: classNamesArrayOfNewCell[1],
+        time: classNamesArrayOfNewCell[2],
+      };
+      currentEvents.push(newEvent);
+      currentEvents.splice(draggedElIndex, 1);
+      localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
+    });
   }
 
   const onSubmitCreateButton = (event) => {
@@ -61,7 +131,7 @@ const startApplication = () => {
       time: time.value,
     };
 
-    if (isEventDuplicated(newEvent)) {
+    if (isEventDuplicated(newEvent, currentEvents)) {
       alert.classList.remove('hidden');
       return;
     }
@@ -69,7 +139,7 @@ const startApplication = () => {
     currentEvents.push(newEvent);
     localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     renderEvent(newEvent);
-    showCalendarContainer();
+    showCalendarContainer(calendarContainer, newEventContainer);
   };
 
   const onClickNewEventButton = () => {
@@ -81,12 +151,10 @@ const startApplication = () => {
     newEventContainer.classList.remove('hidden');
   };
 
-  let selectedEvent = {};
-
   const onClickDeleteEvent = (event) => {
     if (!event.target.classList.contains('delete-event')) return;
     const cell = event.target.closest('.event');
-    const cellClass = cell.classList[0].split('-');
+    const cellClass = cell.parentElement.classList[0].split('-');
     const cellEventText = cell.firstChild.data.trim();
     const index = currentEvents.findIndex(
       (event) => event.day === cellClass[1] && event.time === cellClass[2]
@@ -108,6 +176,7 @@ const startApplication = () => {
     localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     cell.innerHTML = '';
     cell.classList.remove('event');
+    cell.setAttribute('draggable', false);
   };
 
   const onClickFilterParticipant = () => {
@@ -125,59 +194,15 @@ const startApplication = () => {
   };
 
   form.addEventListener('submit', onSubmitCreateButton);
-  cancelButton.addEventListener('click', () => showCalendarContainer());
+  cancelButton.addEventListener('click', () =>
+    showCalendarContainer(calendarContainer, newEventContainer)
+  );
   newEvent.addEventListener('click', onClickNewEventButton);
   table.addEventListener('click', onClickDeleteEvent);
   filter.addEventListener('change', onClickFilterParticipant);
   confirmDelete.addEventListener('click', onClickConfirmDeleteEvent);
-
-  const showCalendarContainer = () => {
-    calendarContainer.classList.remove('hidden');
-    newEventContainer.classList.add('hidden');
-  };
-
-  const isEventDuplicated = (newEvent) => {
-    const { day, time } = newEvent;
-    const duplicate = currentEvents.find(
-      (event) => event.day === day && event.time === time
-    );
-    return duplicate === undefined ? false : true;
-  };
-
-  const isValid = (eventText, participants, day, time) => {
-    if (
-      eventText.checkValidity() &&
-      participants.checkValidity() &&
-      day.checkValidity() &&
-      time.checkValidity()
-    ) {
-      return true;
-    }
-    return false;
-  };
-
-  const renderEvent = (event) => {
-    const { eventText, day, time } = event;
-    const cellClass = `cell-${day}-${time}`;
-    const cell = document.querySelector(`.${cellClass}`);
-    cell.innerHTML = `
-        ${eventText}
-        <button type="button" id="delete-event" class="close" aria-label="Close">
-          <span class="delete-event">&times;</span>
-        </button>
-      `;
-    cell.classList.add('event');
-  };
-
-  const deleteAllEvents = (events) => {
-    events.map((event) => {
-      const { day, time } = event;
-      const cellClass = `cell-${day}-${time}`;
-      const cell = document.querySelector(`.${cellClass}`);
-      cell.innerHTML = '';
-      cell.classList.remove('event');
-    });
-  };
+  confirmAuth.addEventListener('click', onClickConfirmAuth);
+  table.addEventListener('dragstart', drag);
 };
 
 startApplication();
