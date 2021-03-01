@@ -13,6 +13,8 @@
   </head>
   <body>
     <div class="container-calendar">
+      <div class="alert alert-api-ok alert-success hidden" role="alert"></div>
+      <div class="alert alert-api-fail alert-danger hidden" role="alert"></div>
       <div class="d-flex justify-content-between">
         <h1>Calendar</h1>
         <div class="d-flex">
@@ -181,7 +183,7 @@
     </div>
 
     <div class="container-newEvent hidden">
-      <div class="alert alert-danger" role="alert">
+      <div class="alert alert-event alert-danger" role="alert">
         Failed to create an event. Time slot is already booked.
       </div>
 
