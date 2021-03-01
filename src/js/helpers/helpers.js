@@ -29,4 +29,12 @@ const deleteAllEvents = (events) => {
   });
 };
 
-export { isEventDuplicated, isValid, deleteAllEvents };
+const showNotification = (className, message) => {
+  document.querySelector(`.${className}`).classList.remove('hidden');
+  document.querySelector(`.${className}`).innerText = `${message}`;
+  setTimeout(function () {
+    document.querySelector(`.${className}`).classList.add('hidden');
+  }, 3000);
+};
+
+export { isEventDuplicated, isValid, deleteAllEvents, showNotification };

@@ -8,13 +8,13 @@ import {
 } from './rendering/rendering';
 import users from '../config';
 import { User, Admin } from './users/users';
-import { postNewEvent, getAllEvents } from './api/api';
+import { postNewEvent, getAllEvents, deleteEvent, putEvent } from './api/api';
 
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
   const filter = document.querySelector('.users-filter');
   const table = document.querySelector('.table');
-  const alert = document.querySelector('.alert-danger');
+  const alert = document.querySelector('.alert-event');
   const eventText = document.querySelector('#inputNameEvent');
   const form = document.querySelector('#form');
   const day = document.querySelector('#day');
@@ -56,6 +56,7 @@ const startApplication = () => {
 
   const renderEventsFromServer = async () => {
     currentEvents = await getAllEvents();
+    console.log(currentEvents);
     if (currentEvents.length) {
       renderFilteredEvents(currentEvents);
     }
@@ -106,9 +107,12 @@ const startApplication = () => {
         day: classNamesArrayOfNewCell[1],
         time: classNamesArrayOfNewCell[2],
       };
-      currentEvents.push(newEvent);
-      currentEvents.splice(draggedElIndex, 1);
-      //localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
+
+      const eventApiId = currentEvents[draggedElIndex].id;
+      putEvent(eventApiId, newEvent).then(() => {
+        currentEvents.push(newEvent);
+        currentEvents.splice(draggedElIndex, 1);
+      });
     });
   }
 
@@ -161,8 +165,11 @@ const startApplication = () => {
       (event) => event.day === cellClass[1] && event.time === cellClass[2]
     );
 
-    selectedEvent.cell = cell;
-    selectedEvent.index = index;
+    selectedEvent = {
+      cell,
+      index,
+      id: currentEvents[index].id,
+    };
 
     document.querySelector(
       '.modal-body'
@@ -171,13 +178,14 @@ const startApplication = () => {
   };
 
   const onClickConfirmDeleteEvent = () => {
-    const cell = selectedEvent.cell;
+    const { cell, index, id } = selectedEvent;
     modal.hide();
-    currentEvents.splice(selectedEvent.index, 1);
-    //localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
-    cell.innerHTML = '';
-    cell.classList.remove('event');
-    cell.setAttribute('draggable', false);
+    deleteEvent(id).then(() => {
+      currentEvents.splice(index, 1);
+      cell.innerHTML = '';
+      cell.classList.remove('event');
+      cell.setAttribute('draggable', false);
+    });
   };
 
   const onClickFilterParticipant = () => {
