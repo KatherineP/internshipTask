@@ -1,6 +1,26 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
+  resolve: {
+    fallback: {
+      util: false,
+      path: false,
+      crypto: false,
+      buffer: false,
+      https: false,
+      http: false,
+      vm: false,
+      os: false,
+      fs: false,
+      tls: false,
+      net: false,
+      stream: false,
+      child_process: false,
+      constants: false,
+      assert: false,
+      worker_threads: false,
+    },
+  },
   mode: 'none',
   entry: __dirname + '/src/js/index.js',
   output: {

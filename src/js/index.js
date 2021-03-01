@@ -8,6 +8,7 @@ import {
 } from './rendering/rendering';
 import users from '../config';
 import { User, Admin } from './users/users';
+import { postNewEvent, getAllEvents } from './api/api';
 
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
@@ -53,15 +54,14 @@ const startApplication = () => {
     onAuthComplete(userObj);
   };
 
-  // local Storage functionality
-  const eventsFromLocalStorage = JSON.parse(
-    localStorage.getItem('currentEvents')
-  );
+  const renderEventsFromServer = async () => {
+    currentEvents = await getAllEvents();
+    if (currentEvents.length) {
+      renderFilteredEvents(currentEvents);
+    }
+  };
 
-  if (eventsFromLocalStorage !== null) {
-    currentEvents = eventsFromLocalStorage;
-    renderFilteredEvents(currentEvents);
-  }
+  renderEventsFromServer();
 
   const onAuthComplete = (user) => {
     if (user.can('create-event') && user.can('drag') && user.can('delete')) {
@@ -108,7 +108,7 @@ const startApplication = () => {
       };
       currentEvents.push(newEvent);
       currentEvents.splice(draggedElIndex, 1);
-      localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
+      //localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     });
   }
 
@@ -136,10 +136,11 @@ const startApplication = () => {
       return;
     }
 
-    currentEvents.push(newEvent);
-    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
-    renderEvent(newEvent);
-    showCalendarContainer(calendarContainer, newEventContainer);
+    postNewEvent(newEvent).then((event) => {
+      currentEvents.push({ ...newEvent, id: event.id });
+      renderEvent(newEvent);
+      showCalendarContainer(calendarContainer, newEventContainer);
+    });
   };
 
   const onClickNewEventButton = () => {
@@ -173,7 +174,7 @@ const startApplication = () => {
     const cell = selectedEvent.cell;
     modal.hide();
     currentEvents.splice(selectedEvent.index, 1);
-    localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
+    //localStorage.setItem('currentEvents', JSON.stringify(currentEvents));
     cell.innerHTML = '';
     cell.classList.remove('event');
     cell.setAttribute('draggable', false);
