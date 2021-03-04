@@ -8,7 +8,8 @@ import {
 } from './rendering/rendering';
 import users from '../config';
 import { User, Admin } from './users/users';
-import { postNewEvent, getAllEvents, deleteEvent, putEvent } from './api/api';
+import { showNotification } from './helpers/helpers';
+import swagger from './api/api';
 
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
@@ -55,8 +56,7 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    currentEvents = await getAllEvents();
-    console.log(currentEvents);
+    currentEvents = await swagger.getAllEvents();
     if (currentEvents.length) {
       renderFilteredEvents(currentEvents);
     }
@@ -109,7 +109,7 @@ const startApplication = () => {
       };
 
       const eventApiId = currentEvents[draggedElIndex].id;
-      putEvent(eventApiId, newEvent).then(() => {
+      swagger.putEvent(eventApiId, newEvent).then(() => {
         currentEvents.push(newEvent);
         currentEvents.splice(draggedElIndex, 1);
       });
@@ -136,11 +136,14 @@ const startApplication = () => {
     };
 
     if (isEventDuplicated(newEvent, currentEvents)) {
-      alert.classList.remove('hidden');
+      showNotification(
+        'alert-event',
+        'Failed to create an event. Time slot is already booked.'
+      );
       return;
     }
 
-    postNewEvent(newEvent).then((event) => {
+    swagger.postNewEvent(newEvent).then((event) => {
       currentEvents.push({ ...newEvent, id: event.id });
       renderEvent(newEvent);
       showCalendarContainer(calendarContainer, newEventContainer);
@@ -180,7 +183,7 @@ const startApplication = () => {
   const onClickConfirmDeleteEvent = () => {
     const { cell, index, id } = selectedEvent;
     modal.hide();
-    deleteEvent(id).then(() => {
+    swagger.deleteEvent(id).then(() => {
       currentEvents.splice(index, 1);
       cell.innerHTML = '';
       cell.classList.remove('event');
