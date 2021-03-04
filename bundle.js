@@ -611,53 +611,54 @@ class Admin extends User {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "postNewEvent": () => (/* binding */ postNewEvent),
-/* harmony export */   "getAllEvents": () => (/* binding */ getAllEvents),
-/* harmony export */   "deleteEvent": () => (/* binding */ deleteEvent),
-/* harmony export */   "putEvent": () => (/* binding */ putEvent)
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _helpers_helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6);
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
-const postNewEvent = async eventObj => {
-  try {
-    const res = await fetch('http://158.101.166.74:8080/api/data/prokofievaK/event', {
-      method: 'POST',
-      body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
+
+class Swagger {
+  constructor() {
+    _defineProperty(this, "_apiBase", 'http://158.101.166.74:8080/api/data/prokofievaK/event');
+
+    _defineProperty(this, "postNewEvent", async eventObj => {
+      return await this.getResource('POST', {
+        method: 'POST',
+        body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
     });
 
-    if (!res.ok) {
-      console.log(`Looks like there was a problem. Status Code: ${res.status}`);
-      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'POST request failed');
-      return false;
-    }
+    _defineProperty(this, "getAllEvents", async () => {
+      const result = await this.getResource('GET');
+      return result.map(this._transformEvents);
+    });
 
-    const data = await res.json();
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', 'POST request was successful');
-    return data;
-  } catch (err) {
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'POST request failed');
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
+    _defineProperty(this, "deleteEvent", async eventId => {
+      const result = await this.getResource('DELETE', {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json'
+        }
+      }, `/${eventId}`);
+    });
 
-const getAllEvents = async () => {
-  try {
-    const res = await fetch('http://158.101.166.74:8080/api/data/prokofievaK/event');
+    _defineProperty(this, "putEvent", async (eventId, eventObj) => {
+      const result = await this.getResource('PUT', {
+        method: 'PUT',
+        body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
+        headers: {
+          Accept: 'application/json'
+        }
+      }, `/${eventId}`);
+      return this._transformEvent(result);
+    });
 
-    if (!res.ok) {
-      console.log(`Looks like there was a problem. Status Code: ${res.status}`);
-      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'GET request failed');
-      return false;
-    }
-
-    const data = await res.json();
-    const eventObjects = data.map(event => {
+    _defineProperty(this, "_transformEvents", event => {
       const {
         eventText,
         day,
@@ -672,76 +673,51 @@ const getAllEvents = async () => {
         participants
       };
     });
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', 'GET request was successful');
-    return eventObjects;
-  } catch (err) {
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'GET request failed');
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
 
-const deleteEvent = async eventId => {
-  try {
-    const res = await fetch(`http://158.101.166.74:8080/api/data/prokofievaK/event/${eventId}`, {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json'
-      }
+    _defineProperty(this, "_transformEvent", res => {
+      const {
+        eventText,
+        day,
+        time,
+        participants
+      } = JSON.parse(res.data);
+      return {
+        eventText,
+        day,
+        time,
+        participants
+      };
     });
-
-    if (!res.ok) {
-      console.log(`Looks like there was a problem. Status Code: ${res.status}`);
-      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'DELETE request failed');
-      return false;
-    }
-
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', 'DELETE request was successful');
-  } catch (err) {
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'DELETE request failed');
-    console.log(err);
-    return Promise.reject(err);
   }
-};
 
-const putEvent = async (eventId, eventObj) => {
-  try {
-    const res = await fetch(`http://158.101.166.74:8080/api/data/prokofievaK/event/${eventId}`, {
-      method: 'PUT',
-      body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
-      headers: {
-        Accept: 'application/json'
+  async getResource(requestType, fetchParamsObj = {}, id = '') {
+    try {
+      const res = await fetch(`${this._apiBase}${id}`, fetchParamsObj);
+
+      if (!res.ok) {
+        (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', `${requestType} request failed`);
+        throw new Error(`Could not fetch ${this._apiBase}/${id}, received ${res.status}`);
       }
-    });
 
-    if (!res.ok) {
-      console.log(`Looks like there was a problem. Status Code: ${res.status}`);
-      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'PUT request failed');
-      return false;
+      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', `${requestType} request was successful`);
+      let responseBody;
+
+      if (fetchParamsObj.method === 'DELETE') {
+        responseBody = await res.text();
+      } else {
+        responseBody = await res.json();
+      }
+
+      return responseBody;
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    const data = await res.json();
-    const {
-      eventText,
-      day,
-      time,
-      participants
-    } = JSON.parse(data.data);
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', 'PUT request was successful');
-    return {
-      eventText,
-      day,
-      time,
-      participants
-    };
-  } catch (err) {
-    (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', 'PUT request failed');
-    console.log(err);
-    return Promise.reject(err);
   }
-};
 
+}
 
+const swagger = new Swagger();
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (swagger);
 
 /***/ })
 /******/ 	]);
@@ -828,6 +804,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
   const filter = document.querySelector('.users-filter');
@@ -876,8 +853,7 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    currentEvents = await (0,_api_api__WEBPACK_IMPORTED_MODULE_5__.getAllEvents)();
-    console.log(currentEvents);
+    currentEvents = await _api_api__WEBPACK_IMPORTED_MODULE_5__.default.getAllEvents();
 
     if (currentEvents.length) {
       (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
@@ -924,7 +900,7 @@ const startApplication = () => {
         time: classNamesArrayOfNewCell[2]
       };
       const eventApiId = currentEvents[draggedElIndex].id;
-      (0,_api_api__WEBPACK_IMPORTED_MODULE_5__.putEvent)(eventApiId, newEvent).then(() => {
+      _api_api__WEBPACK_IMPORTED_MODULE_5__.default.putEvent(eventApiId, newEvent).then(() => {
         currentEvents.push(newEvent);
         currentEvents.splice(draggedElIndex, 1);
       });
@@ -948,11 +924,11 @@ const startApplication = () => {
     };
 
     if ((0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.isEventDuplicated)(newEvent, currentEvents)) {
-      alert.classList.remove('hidden');
+      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.showNotification)('alert-event', 'Failed to create an event. Time slot is already booked.');
       return;
     }
 
-    (0,_api_api__WEBPACK_IMPORTED_MODULE_5__.postNewEvent)(newEvent).then(event => {
+    _api_api__WEBPACK_IMPORTED_MODULE_5__.default.postNewEvent(newEvent).then(event => {
       currentEvents.push({ ...newEvent,
         id: event.id
       });
@@ -992,7 +968,7 @@ const startApplication = () => {
       id
     } = selectedEvent;
     modal.hide();
-    (0,_api_api__WEBPACK_IMPORTED_MODULE_5__.deleteEvent)(id).then(() => {
+    _api_api__WEBPACK_IMPORTED_MODULE_5__.default.deleteEvent(id).then(() => {
       currentEvents.splice(index, 1);
       cell.innerHTML = '';
       cell.classList.remove('event');
