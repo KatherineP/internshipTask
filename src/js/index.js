@@ -9,7 +9,7 @@ import {
 import users from '../config';
 import { User, Admin } from './users/users';
 import { showNotification } from './helpers/helpers';
-import swagger from './api/api';
+import apiDecorator from './api/decorator';
 
 const startApplication = () => {
   const cancelButton = document.querySelector('#cancel');
@@ -56,7 +56,7 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    currentEvents = await swagger.getAllEvents();
+    currentEvents = await apiDecorator.getAllEvents();
     if (currentEvents.length) {
       renderFilteredEvents(currentEvents);
     }
@@ -109,7 +109,7 @@ const startApplication = () => {
       };
 
       const eventApiId = currentEvents[draggedElIndex].id;
-      swagger.putEvent(eventApiId, newEvent).then(() => {
+      apiDecorator.putEvent(eventApiId, newEvent).then(() => {
         currentEvents.push(newEvent);
         currentEvents.splice(draggedElIndex, 1);
       });
@@ -143,7 +143,7 @@ const startApplication = () => {
       return;
     }
 
-    swagger.postNewEvent(newEvent).then((event) => {
+    apiDecorator.postNewEvent(newEvent).then((event) => {
       currentEvents.push({ ...newEvent, id: event.id });
       renderEvent(newEvent);
       showCalendarContainer(calendarContainer, newEventContainer);
@@ -183,7 +183,7 @@ const startApplication = () => {
   const onClickConfirmDeleteEvent = () => {
     const { cell, index, id } = selectedEvent;
     modal.hide();
-    swagger.deleteEvent(id).then(() => {
+    apiDecorator.deleteEvent(id).then(() => {
       currentEvents.splice(index, 1);
       cell.innerHTML = '';
       cell.classList.remove('event');
