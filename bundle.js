@@ -613,17 +613,54 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _helpers_helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6);
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(11);
+/* harmony import */ var _helpers_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6);
+
+
+
+class ApiDecorator {
+  constructor() {
+    const methods = Object.getOwnPropertyNames(_api__WEBPACK_IMPORTED_MODULE_0__.default).filter(methodName => !methodName.includes('_'));
+    methods.forEach(method => {
+      this[method] = async (...param) => {
+        try {
+          const result = await _api__WEBPACK_IMPORTED_MODULE_0__.default[method](...param);
+          (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.showNotification)('alert-api-ok', `${method} request was successful`);
+          return result;
+        } catch (error) {
+          if (method === 'postNewEvent') {
+            (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.showNotification)('alert-event', `${method} request failed`);
+          } else {
+            (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.showNotification)('alert-api-fail', `${method} request failed`);
+          }
+
+          return null;
+        }
+      };
+    });
+  }
+
+}
+
+const apiDecorator = new ApiDecorator();
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (apiDecorator);
+
+/***/ }),
+/* 11 */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-
 
 class Swagger {
   constructor() {
     _defineProperty(this, "_apiBase", 'http://158.101.166.74:8080/api/data/prokofievaK/event');
 
     _defineProperty(this, "postNewEvent", async eventObj => {
-      return await this.getResource('POST', {
+      return await this.getResource({
         method: 'POST',
         body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
         headers: {
@@ -634,12 +671,12 @@ class Swagger {
     });
 
     _defineProperty(this, "getAllEvents", async () => {
-      const result = await this.getResource('GET');
+      const result = await this.getResource();
       return result.map(this._transformEvents);
     });
 
     _defineProperty(this, "deleteEvent", async eventId => {
-      const result = await this.getResource('DELETE', {
+      const result = await this.getResource({
         method: 'DELETE',
         headers: {
           Accept: 'application/json'
@@ -648,7 +685,7 @@ class Swagger {
     });
 
     _defineProperty(this, "putEvent", async (eventId, eventObj) => {
-      const result = await this.getResource('PUT', {
+      const result = await this.getResource({
         method: 'PUT',
         body: `{"data": "${JSON.stringify(eventObj).replace(/"/g, '\\"')}",\n  "id": "test11"}`,
         headers: {
@@ -690,28 +727,22 @@ class Swagger {
     });
   }
 
-  async getResource(requestType, fetchParamsObj = {}, id = '') {
-    try {
-      const res = await fetch(`${this._apiBase}${id}`, fetchParamsObj);
+  async getResource(fetchParamsObj = {}, id = '') {
+    const res = await fetch(`${this._apiBase}${id}`, fetchParamsObj);
 
-      if (!res.ok) {
-        (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-fail', `${requestType} request failed`);
-        throw new Error(`Could not fetch ${this._apiBase}/${id}, received ${res.status}`);
-      }
-
-      (0,_helpers_helpers__WEBPACK_IMPORTED_MODULE_0__.showNotification)('alert-api-ok', `${requestType} request was successful`);
-      let responseBody;
-
-      if (fetchParamsObj.method === 'DELETE') {
-        responseBody = await res.text();
-      } else {
-        responseBody = await res.json();
-      }
-
-      return responseBody;
-    } catch (error) {
-      return Promise.reject(error);
+    if (!res.ok) {
+      throw new Error(`Could not fetch ${this._apiBase}/${id}, received ${res.status}`);
     }
+
+    let responseBody;
+
+    if (fetchParamsObj.method === 'DELETE') {
+      responseBody = await res.text();
+    } else {
+      responseBody = await res.json();
+    }
+
+    return responseBody;
   }
 
 }
@@ -796,7 +827,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _rendering_rendering__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7);
 /* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8);
 /* harmony import */ var _users_users__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9);
-/* harmony import */ var _api_api__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(10);
+/* harmony import */ var _api_decorator__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(10);
 
 
 
@@ -853,7 +884,7 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    currentEvents = await _api_api__WEBPACK_IMPORTED_MODULE_5__.default.getAllEvents();
+    currentEvents = await _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.getAllEvents();
 
     if (currentEvents.length) {
       (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
@@ -900,7 +931,7 @@ const startApplication = () => {
         time: classNamesArrayOfNewCell[2]
       };
       const eventApiId = currentEvents[draggedElIndex].id;
-      _api_api__WEBPACK_IMPORTED_MODULE_5__.default.putEvent(eventApiId, newEvent).then(() => {
+      _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.putEvent(eventApiId, newEvent).then(() => {
         currentEvents.push(newEvent);
         currentEvents.splice(draggedElIndex, 1);
       });
@@ -928,7 +959,7 @@ const startApplication = () => {
       return;
     }
 
-    _api_api__WEBPACK_IMPORTED_MODULE_5__.default.postNewEvent(newEvent).then(event => {
+    _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.postNewEvent(newEvent).then(event => {
       currentEvents.push({ ...newEvent,
         id: event.id
       });
@@ -968,7 +999,7 @@ const startApplication = () => {
       id
     } = selectedEvent;
     modal.hide();
-    _api_api__WEBPACK_IMPORTED_MODULE_5__.default.deleteEvent(id).then(() => {
+    _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.deleteEvent(id).then(() => {
       currentEvents.splice(index, 1);
       cell.innerHTML = '';
       cell.classList.remove('event');
