@@ -1,5 +1,10 @@
 import '../style/main.scss';
-import { isEventDuplicated, isValid, deleteAllEvents } from './helpers/helpers';
+import {
+  isEventDuplicated,
+  isValid,
+  deleteAllEvents,
+  transformEvents,
+} from './helpers/helpers';
 import {
   renderFilteredEvents,
   renderEvent,
@@ -56,10 +61,11 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    currentEvents = await apiDecorator.getAllEvents();
-    if (currentEvents.length) {
+    const data = await apiDecorator.getAllEvents();
+    currentEvents = data.map(transformEvents);
+    if (currentEvents !== null) {
       renderFilteredEvents(currentEvents);
-    }
+    } else return;
   };
 
   renderEventsFromServer();

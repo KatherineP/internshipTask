@@ -1,4 +1,7 @@
 const isEventDuplicated = (newEvent, currentEvents) => {
+  if (currentEvents === null) {
+    return;
+  }
   const { day, time } = newEvent;
   const duplicate = currentEvents.find(
     (event) => event.day === day && event.time === time
@@ -37,4 +40,21 @@ const showNotification = (className, message) => {
   }, 3000);
 };
 
-export { isEventDuplicated, isValid, deleteAllEvents, showNotification };
+const transformEvents = (event) => {
+  const { eventText, day, time, participants } = JSON.parse(event.data);
+  return {
+    id: event.id,
+    eventText,
+    day,
+    time,
+    participants,
+  };
+};
+
+export {
+  isEventDuplicated,
+  isValid,
+  deleteAllEvents,
+  showNotification,
+  transformEvents,
+};

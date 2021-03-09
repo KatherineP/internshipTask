@@ -1,74 +1,48 @@
+import axios from 'axios';
 class Swagger {
   _apiBase = 'http://158.101.166.74:8080/api/data/prokofievaK/event';
 
-  async getResource(fetchParamsObj = {}, id = '') {
-    const res = await fetch(`${this._apiBase}${id}`, fetchParamsObj);
-    if (!res.ok) {
-      throw new Error(
-        `Could not fetch ${this._apiBase}/${id}, received ${res.status}`
-      );
-    }
-    let responseBody;
-    if (fetchParamsObj.method === 'DELETE') {
-      responseBody = await res.text();
-    } else {
-      responseBody = await res.json();
-    }
-    return responseBody;
-  }
-
   postNewEvent = async (eventObj) => {
-    return await this.getResource({
-      method: 'POST',
-      body: `{"data": "${JSON.stringify(eventObj).replace(
-        /"/g,
-        '\\"'
-      )}",\n  "id": "test11"}`,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+    const result = await axios.post(
+      this._apiBase,
+      this._createDataObj(eventObj)
+    );
+    return result.data;
   };
 
   getAllEvents = async () => {
-    const result = await this.getResource();
-    return result.map(this._transformEvents);
+    const res = await axios.get(this._apiBase);
+    // const events = res.data.map(this._transformEvents);
+    // return events;
+    return res.data;
   };
 
   deleteEvent = async (eventId) => {
-    const result = await this.getResource(
-      {
-        method: 'DELETE',
-        headers: {
-          Accept: 'application/json',
-        },
-      },
-      `/${eventId}`
-    );
+    await axios.delete(`${this._apiBase}/${eventId}`);
   };
 
   putEvent = async (eventId, eventObj) => {
-    const result = await this.getResource(
-      {
-        method: 'PUT',
-        body: `{"data": "${JSON.stringify(eventObj).replace(
-          /"/g,
-          '\\"'
-        )}",\n  "id": "test11"}`,
-        headers: {
-          Accept: 'application/json',
-        },
-      },
-      `/${eventId}`
+    const result = await axios.put(
+      `${this._apiBase}/${eventId}`,
+      this._createDataObj(eventObj)
     );
     return this._transformEvent(result);
   };
 
-  _transformEvents = (event) => {
-    const { eventText, day, time, participants } = JSON.parse(event.data);
+  // _transformEvents = (event) => {
+  //   const { eventText, day, time, participants } = JSON.parse(event.data);
+  //   return {
+  //     id: event.id,
+  //     eventText,
+  //     day,
+  //     time,
+  //     participants,
+  //   };
+  // };
+
+  _transformEvent = (res) => {
+    const { eventText, day, time, participants } = JSON.parse(res.data.data);
     return {
-      id: event.id,
       eventText,
       day,
       time,
@@ -76,14 +50,12 @@ class Swagger {
     };
   };
 
-  _transformEvent = (res) => {
-    const { eventText, day, time, participants } = JSON.parse(res.data);
-    return {
-      eventText,
-      day,
-      time,
-      participants,
-    };
+  _createDataObj = (eventObj) => {
+    const data = JSON.stringify({
+      data: JSON.stringify(eventObj),
+      id: 'test',
+    });
+    return data;
   };
 }
 

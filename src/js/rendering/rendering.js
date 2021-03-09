@@ -1,4 +1,7 @@
 const renderFilteredEvents = (events) => {
+  if (events === null) {
+    return;
+  }
   return events.map((event) => {
     const { eventText, day, time } = event;
     const cellClass = `cell-${day}-${time}`;
@@ -13,6 +16,9 @@ const renderFilteredEvents = (events) => {
 };
 
 const renderFilteredEventsForUser = (events) => {
+  if (events === null) {
+    return;
+  }
   return events.map((event) => {
     const { eventText, day, time } = event;
     const cellClass = `cell-${day}-${time}`;
