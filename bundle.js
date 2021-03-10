@@ -703,15 +703,14 @@ class Swagger {
     _defineProperty(this, "_apiBase", 'http://158.101.166.74:8080/api/data/prokofievaK/event');
 
     _defineProperty(this, "postNewEvent", async eventObj => {
+      console.log(this._createDataObj(eventObj));
       const result = await axios__WEBPACK_IMPORTED_MODULE_0___default().post(this._apiBase, this._createDataObj(eventObj));
       return result.data;
     });
 
     _defineProperty(this, "getAllEvents", async () => {
-      const res = await axios__WEBPACK_IMPORTED_MODULE_0___default().get(this._apiBase); // const events = res.data.map(this._transformEvents);
-      // return events;
-
-      return res.data;
+      const res = await axios__WEBPACK_IMPORTED_MODULE_0___default().get(this._apiBase);
+      return res.data.map(this._transformEvents);
     });
 
     _defineProperty(this, "deleteEvent", async eventId => {
@@ -720,7 +719,24 @@ class Swagger {
 
     _defineProperty(this, "putEvent", async (eventId, eventObj) => {
       const result = await axios__WEBPACK_IMPORTED_MODULE_0___default().put(`${this._apiBase}/${eventId}`, this._createDataObj(eventObj));
-      return this._transformEvent(result);
+      const data = result.data;
+      return this._transformEvent(data);
+    });
+
+    _defineProperty(this, "_transformEvents", event => {
+      const {
+        eventText,
+        day,
+        time,
+        participants
+      } = JSON.parse(event.data);
+      return {
+        id: event.id,
+        eventText,
+        day,
+        time,
+        participants
+      };
     });
 
     _defineProperty(this, "_transformEvent", res => {
@@ -729,7 +745,7 @@ class Swagger {
         day,
         time,
         participants
-      } = JSON.parse(res.data.data);
+      } = JSON.parse(res.data);
       return {
         eventText,
         day,
@@ -2611,8 +2627,7 @@ const startApplication = () => {
   };
 
   const renderEventsFromServer = async () => {
-    const data = await _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.getAllEvents();
-    currentEvents = data.map(_helpers_helpers__WEBPACK_IMPORTED_MODULE_1__.transformEvents);
+    currentEvents = await _api_decorator__WEBPACK_IMPORTED_MODULE_5__.default.getAllEvents();
 
     if (currentEvents !== null) {
       (0,_rendering_rendering__WEBPACK_IMPORTED_MODULE_2__.renderFilteredEvents)(currentEvents);
