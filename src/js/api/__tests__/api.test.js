@@ -25,7 +25,7 @@ const eventsObj = [
     time: '14',
   },
 ];
-const events = [
+const eventsApi = [
   {
     id: '3757f8f4-dd3c-49d1-99b0-dd8b72e43d25',
     data:
@@ -37,6 +37,23 @@ const events = [
       '{"id":"fc237ebe-1e89-4952-a4f5-44c0f44a9d77","eventText":"retro meeting","day":"mon","time":"11","participants":["Alex Prokofiev"]}',
   },
 ];
+
+const transformedEvents = [
+  {
+    id: '3757f8f4-dd3c-49d1-99b0-dd8b72e43d25',
+    eventText: 'retro meeting',
+    day: 'mon',
+    participants: ['Kate Prokofieva'],
+    time: '10',
+  },
+  {
+    id: 'fc237ebe-1e89-4952-a4f5-44c0f44a9d77',
+    eventText: 'retro meeting',
+    day: 'mon',
+    participants: ['Alex Prokofiev'],
+    time: '11',
+  },
+];
 const newEvent = {
   day: 'mon',
   eventText: 'retro meeting',
@@ -44,18 +61,55 @@ const newEvent = {
   time: '10',
 };
 
+const dataForPostApi = JSON.stringify({
+  data: JSON.stringify(newEvent),
+  id: 'test',
+});
+
+const eventApi = {
+  id: '3757f8f4-dd3c-49d1-99b0-dd8b72e43d25',
+  data:
+    '{"id":"3757f8f4-dd3c-49d1-99b0-dd8b72e43d25","eventText":"retro meeting","day":"mon","time":"10","participants":["Kate Prokofieva"]}',
+};
+
+const transformedEvent = {
+  eventText: 'retro meeting',
+  day: 'mon',
+  time: '10',
+  participants: ['Kate Prokofieva'],
+};
+
+const eventId = '3757f8f4-dd3c-49d1-99b0-dd8b72e43d25';
+
 jest.mock('axios');
 
 describe('Test API service', () => {
   it('success get all events', async () => {
-    axios.get.mockImplementationOnce(() => Promise.resolve({ data: events }));
+    axios.get.mockImplementationOnce(() =>
+      Promise.resolve({ data: eventsApi })
+    );
     const allEvents = await swagger.getAllEvents();
-    expect(allEvents).toEqual(events);
-    expect(axios.get).toHaveBeenCalledWith(apiBase);
+    expect(allEvents).toEqual(transformedEvents);
   });
-  // it('success post event', async () => {
-  //   axios.post.mockImplementationOnce(() => Promise.resolve({ data: event }));
-  //   const allEvents = await swagger.postNewEvent();
-  //   expect(allEvents).toEqual(event);
-  // });
+
+  it('success post event', async () => {
+    axios.post.mockImplementationOnce((dataForPostApi) =>
+      Promise.resolve({ data: event }, dataForPostApi)
+    );
+    const postedEvent = await swagger.postNewEvent(newEvent);
+    expect(postedEvent).toEqual(event);
+    expect(axios.post).toHaveBeenCalledWith(apiBase, dataForPostApi);
+  });
+
+  it('success put event', async () => {
+    axios.put.mockImplementationOnce((eventId, dataForPostApi) =>
+      Promise.resolve({ data: eventApi }, eventId, dataForPostApi)
+    );
+    const putEvent = await swagger.putEvent(eventId, newEvent);
+    expect(putEvent).toEqual(transformedEvent);
+    expect(axios.put).toHaveBeenCalledWith(
+      `${apiBase}/${eventId}`,
+      dataForPostApi
+    );
+  });
 });
